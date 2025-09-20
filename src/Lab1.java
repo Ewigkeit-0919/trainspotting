@@ -297,7 +297,7 @@ public class Lab1 {
                         }
 
                         // Has arrived A1, need to release the semaphore b
-                        if (checkSensor(16, 8, se, !direction)) {
+                        if (checkSensor(15, 8, se, !direction)) {
                             b.release();
                         }
 
