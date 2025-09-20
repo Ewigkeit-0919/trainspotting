@@ -90,6 +90,9 @@ public class Lab1 {
                          * Direction: True
                          */
 
+                        /**
+                         * A --> B
+                         */
                         // From A1 to B
                         if (checkSensor(15, 7, se, direction)) {
                             getPermission(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b);
@@ -108,6 +111,9 @@ public class Lab1 {
                             }
                         }
 
+                        /**
+                         * B --> C
+                         */
                         // From B to C
                         if (checkSensor(17, 9, se, direction)) {
                             // Stop the train first
@@ -135,6 +141,9 @@ public class Lab1 {
                             b.release();
                         }
 
+                        /**
+                         * C --> D
+                         */
                         // From C1 to D
                         if (checkSensor(6, 9, se, direction)) {
                             getPermission(id, speed, 4, 9, TSimInterface.SWITCH_LEFT, d);
@@ -153,6 +162,9 @@ public class Lab1 {
                             }
                         }
 
+                        /**
+                         * D --> E
+                         */
                         // From D to E (south station)
                         if (checkSensor(1, 11, se, direction)) {
                             // Stop the train first
@@ -184,6 +196,7 @@ public class Lab1 {
                          * From South to North
                          * Direction: False
                          */
+
                         /**
                          * E --> D
                          */
