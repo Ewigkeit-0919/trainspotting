@@ -190,7 +190,7 @@ public class Lab1 {
                         }
 
                         // Has arrived E2, need to release the semaphore d
-                        if (checkSensor(3, 13, se, direction)) {
+                        if (checkSensor(4, 13, se, direction)) {
                             d.release();
                         }
 
@@ -208,7 +208,7 @@ public class Lab1 {
                         }
 
                         // From E2 to D
-                        if (checkSensor(3, 13, se, !direction)) {
+                        if (checkSensor(4, 13, se, !direction)) {
                             getPermission(id, speed, 3, 11, TSimInterface.SWITCH_RIGHT, d);
                         }
 
