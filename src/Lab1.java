@@ -75,8 +75,10 @@ public class Lab1 {
             public void run() {
                 try {
                     // Initialize: Acquire the semaphore for train 1 and 2
-                    a.acquire();
-                    e.acquire();
+                    if (id == 1)
+                        a.acquire();
+                    else
+                        e.acquire();
 
                     // Main part
                     while (true) {
