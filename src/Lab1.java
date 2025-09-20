@@ -101,7 +101,7 @@ public class Lab1 {
                         }
 
                         // From A2 to B
-                        if (checkSensor(16, 8, se, direction)) {
+                        if (checkSensor(15, 8, se, direction)) {
                             getPermission(id, speed, 17, 7, TSimInterface.SWITCH_LEFT, b);
                         }
 
