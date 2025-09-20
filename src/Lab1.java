@@ -54,7 +54,7 @@ public class Lab1 {
             }
 
             // When reaching the sensor, stop first before acquiring the permit. Then set the direction for the switch and resume speed.
-            public void getPermission(int id, int speed, int switchPosX, int switchPosY, int switchDirection, Semaphore sem, TSimInterface tsi) {
+            public void getPermission(int id, int speed, int switchPosX, int switchPosY, int switchDirection, Semaphore sem) {
                 try {
                     tsi.setSpeed(id, 0);
                     sem.acquire();
@@ -85,16 +85,19 @@ public class Lab1 {
                             continue;
                         }
 
-                        // From North to South; Direction: True
+                        /**
+                         * From North to South
+                         * Direction: True
+                         */
 
                         // From A1 to B
                         if (checkSensor(15, 7, se, direction)) {
-                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b, tsi);
+                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b);
                         }
 
                         // From A2 to B
                         if (checkSensor(16, 8, se, direction)) {
-                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b, tsi);
+                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_LEFT, b);
                         }
 
                         // Has arrived B, need to release the semaphore a
@@ -106,66 +109,157 @@ public class Lab1 {
                         }
 
                         // From B to C
-                        if(checkSensor(17,9,se,direction)) {
+                        if (checkSensor(17, 9, se, direction)) {
                             // Stop the train first
-                            tsi.setSpeed(id,0);
+                            tsi.setSpeed(id, 0);
                             // Make a decision at the switch
                             // If the main road is not occupied, it should be used as the primary route.
-                            if(c.tryAcquire()){
+                            if (c.tryAcquire()) {
                                 // On track C1
-                                tsi.setSwitch(15,9,TSimInterface.SWITCH_RIGHT);
+                                tsi.setSwitch(15, 9, TSimInterface.SWITCH_RIGHT);
                             } else {
                                 // On track C2
-                                tsi.setSwitch(15,9,TSimInterface.SWITCH_LEFT);
+                                tsi.setSwitch(15, 9, TSimInterface.SWITCH_LEFT);
                             }
                             // Resume the speed
-                            tsi.setSpeed(id,speed);
+                            tsi.setSpeed(id, speed);
                         }
 
                         // Has arrived C1, need to release the semaphore b
-                        if (checkSensor(13,9,se,direction)) {
+                        if (checkSensor(13, 9, se, direction)) {
                             b.release();
                         }
 
-                        // Has arrived C1, need to release the semaphore b
-                        if (checkSensor(13,0,se,direction)) {
+                        // Has arrived C2, need to release the semaphore b
+                        if (checkSensor(13, 10, se, direction)) {
                             b.release();
                         }
 
+                        // From C1 to D
+                        if (checkSensor(6, 9, se, direction)) {
+                            getPermission(id, speed, 4, 9, TSimInterface.SWITCH_LEFT, d);
+                        }
 
+                        // From C2 to D
+                        if (checkSensor(6, 10, se, direction)) {
+                            getPermission(id, speed, 4, 9, TSimInterface.SWITCH_RIGHT, d);
+                        }
 
+                        // Has arrived D, need to release the semaphore c
+                        if (checkSensor(2, 9, se, direction)) {
+                            // If the train comes from a parallel track and holds a semaphore, it must release the semaphore resource.
+                            if (isSemaphoreHeld(c)) {
+                                c.release();
+                            }
+                        }
 
+                        // From D to E (south station)
+                        if (checkSensor(1, 11, se, direction)) {
+                            // Stop the train first
+                            tsi.setSpeed(id, 0);
+                            // Make a decision at the switch
+                            // If the main road is not occupied, it should be used as the primary route.
+                            if (e.tryAcquire()) {
+                                // On track E1
+                                tsi.setSwitch(3, 11, TSimInterface.SWITCH_LEFT);
+                            } else {
+                                // On track E2
+                                tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
+                            }
+                            // Resume the speed
+                            tsi.setSpeed(id, speed);
+                        }
 
-                        
+                        // Has arrived E1, need to release the semaphore d
+                        if (checkSensor(5, 11, se, direction)) {
+                            d.release();
+                        }
 
+                        // Has arrived E2, need to release the semaphore d
+                        if (checkSensor(3, 13, se, direction)) {
+                            d.release();
+                        }
 
+                        /**
+                         * From South to North
+                         * Direction: False
+                         */
 
+                        /**
+                         * Crossing
+                         */
 
+                        // Between A1 and F, from north to south
+                        if (checkSensor(6, 7, se)) {
+                            if (direction) {
+                                // If the direction is true, meaning from A1 to F
+                                // Stop the train first
+                                tsi.setSpeed(id, 0);
+                                // Get the semaphore
+                                f.acquire();
+                                // Resume the speed
+                                tsi.setSpeed(id, speed);
+                            } else {
+                                // If the direction is false, meaning from F to A1
+                                // Release the semaphore
+                                f.release();
+                            }
+                        }
 
+                        // Between A1 and F, from south to north
+                        if (checkSensor(10, 7, se)) {
+                            if (!direction) {
+                                // If the direction is false, meaning from A1 to F
+                                // Stop the train first
+                                tsi.setSpeed(id, 0);
+                                // Get the semaphore
+                                f.acquire();
+                                // Resume the speed
+                                tsi.setSpeed(id, speed);
+                            } else {
+                                // If the direction is false, meaning from F to A1
+                                // Release the semaphore
+                                f.release();
+                            }
+                        }
 
+                        // Between A2 and F, from north to south
+                        if (checkSensor(8, 5, se)) {
+                            if (direction) {
+                                // If the direction is true, meaning from A2 to F
+                                // Stop the train first
+                                tsi.setSpeed(id, 0);
+                                // Get the semaphore
+                                f.acquire();
+                                // Resume the speed
+                                tsi.setSpeed(id, speed);
+                            } else {
+                                // If the direction is false, meaning from F to A2
+                                // Release the semaphore
+                                f.release();
+                            }
+                        }
 
+                        // Between A2 and F, from south to north
+                        if (checkSensor(9, 8, se)) {
+                            if (!direction) {
+                                // If the direction is false, meaning from A2 to F
+                                // Stop the train first
+                                tsi.setSpeed(id, 0);
+                                // Get the semaphore
+                                f.acquire();
+                                // Resume the speed
+                                tsi.setSpeed(id, speed);
+                            } else {
+                                // If the direction is false, meaning from F to A2
+                                // Release the semaphore
+                                f.release();
+                            }
+                        }
 
-
-
-
-
-
-
-
-
-
-                        // From South to North; Direction: False
-
-
-
-
-
-
-
-
-
-
-                        // Stop at stations and Turn back
+                        /**
+                         * Stop at stations and Turn back
+                         */
                     }
 
                 } catch (CommandException | InterruptedException e) {
