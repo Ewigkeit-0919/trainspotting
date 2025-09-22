@@ -37,6 +37,9 @@ public class Lab1 {
             // True = from north to south
             boolean direction;
 
+            private static final int NORTH_STATION_TRAIN = 1;
+            private static final int SOUTH_STATION_TRAIN = 2;
+
             public Train(int id, int speed, boolean direction) {
                 this.id = id;
                 this.speed = speed;
@@ -75,9 +78,9 @@ public class Lab1 {
             public void run() {
                 try {
                     // Initialize: Acquire the semaphore for train 1 and 2
-                    if (id == 1)
+                    if (id == NORTH_STATION_TRAIN)
                         a.acquire();
-                    else
+                    else if (id == SOUTH_STATION_TRAIN)
                         e.acquire();
 
                     // Main part
