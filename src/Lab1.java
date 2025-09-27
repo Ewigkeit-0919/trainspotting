@@ -13,21 +13,36 @@ public class Lab1 {
         tsi.setDebug(true);
 
         try {
+            // Set initial speeds for both trains
             tsi.setSpeed(1, speed1);
             tsi.setSpeed(2, speed2);
+
+            // Pre-configure switch position to match semaphore initialization
+            // Switch at (3,11) points RIGHT towards E2 track, consistent with e2=1, e1=0
+            tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
         } catch (CommandException e) {
             e.printStackTrace();
             System.exit(1);
         }
 
-        // Semaphores for different critical sections
-        Semaphore a = new Semaphore(1);
+        // Semaphore initialization based on initial train positions
+        // Train 1 starts on A1, Train 2 starts on E1 - these tracks are marked as unavailable (0)
+        // to prevent collisions. Available tracks (A2, E2) are set to 1 to guide initial routing.
+
+        // North Station
+        Semaphore a1 = new Semaphore(0);  // A1 track initially unavailable to avoid conflicts
+        Semaphore a2 = new Semaphore(1);  // A2 track initially available for use
+
+        // South Station
+        Semaphore e1 = new Semaphore(0);  // E1 track initially unavailable (switch not pointing here)
+        Semaphore e2 = new Semaphore(1);  // E2 track initially available (switch points here)
+
         Semaphore b = new Semaphore(1);
-        Semaphore c = new Semaphore(1);
+        Semaphore c1 = new Semaphore(1);
+        Semaphore c2 = new Semaphore(1);
         Semaphore d = new Semaphore(1);
-        Semaphore e = new Semaphore(1);
-        // For crossing section
-        Semaphore f = new Semaphore(1);
+        // Crossing control
+        Semaphore f = new Semaphore(1);   // Crossing section mutual exclusion
 
 
         class Train implements Runnable {
@@ -36,9 +51,6 @@ public class Lab1 {
             int speed;
             // True = from north to south
             boolean direction;
-
-            private static final int NORTH_STATION_TRAIN = 1;
-            private static final int SOUTH_STATION_TRAIN = 2;
 
             public Train(int id, int speed, boolean direction) {
                 this.id = id;
@@ -56,11 +68,12 @@ public class Lab1 {
                 return se.getXpos() == xPos && se.getYpos() == yPos && se.getStatus() == SensorEvent.ACTIVE;
             }
 
-            // When reaching the sensor, stop first before acquiring the permit. Then set the direction for the switch and resume speed.
-            public void getPermission(int id, int speed, int switchPosX, int switchPosY, int switchDirection, Semaphore sem) {
+            // When reaching the sensor, stop first. Then acquire the permit and release the semaphore. Then set the direction for the switch and resume speed.
+            public void acquireAndRelease(int id, int speed, int switchPosX, int switchPosY, int switchDirection, Semaphore semToAcquire, Semaphore semToRelease) {
                 try {
                     tsi.setSpeed(id, 0);
-                    sem.acquire();
+                    semToAcquire.acquire();
+                    semToRelease.release();
                     tsi.setSwitch(switchPosX, switchPosY, switchDirection);
                     tsi.setSpeed(id, speed);
                 } catch (CommandException | InterruptedException e) {
@@ -69,20 +82,9 @@ public class Lab1 {
                 }
             }
 
-            // Check if the semaphore is held by a train
-            public boolean isSemaphoreHeld(Semaphore semaphore) {
-                return semaphore.availablePermits() == 0;
-            }
-
             @Override
             public void run() {
                 try {
-                    // Initialize: Acquire the semaphore for train 1 and 2
-                    if (id == NORTH_STATION_TRAIN)
-                        a.acquire();
-                    else if (id == SOUTH_STATION_TRAIN)
-                        e.acquire();
-
                     // Main part
                     while (true) {
                         SensorEvent se = tsi.getSensor(id);
@@ -98,22 +100,14 @@ public class Lab1 {
                         /**
                          * A --> B
                          */
-                        // From A1 to B
+                        // From A1 to B, and release the semaphore a1
                         if (checkSensor(15, 7, se, direction)) {
-                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b);
+                            acquireAndRelease(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b, a1);
                         }
 
-                        // From A2 to B
+                        // From A2 to B, and release the semaphore a2
                         if (checkSensor(15, 8, se, direction)) {
-                            getPermission(id, speed, 17, 7, TSimInterface.SWITCH_LEFT, b);
-                        }
-
-                        // Has arrived B, need to release the semaphore a
-                        if (checkSensor(19, 7, se, direction)) {
-                            // If the train comes from a parallel track and holds a semaphore, it must release the semaphore resource.
-                            if (isSemaphoreHeld(a)) {
-                                a.release();
-                            }
+                            acquireAndRelease(id, speed, 17, 7, TSimInterface.SWITCH_LEFT, b, a2);
                         }
 
                         /**
@@ -125,11 +119,12 @@ public class Lab1 {
                             tsi.setSpeed(id, 0);
                             // Make a decision at the switch
                             // If the main road is not occupied, it should be used as the primary route.
-                            if (c.tryAcquire()) {
+                            if (c1.tryAcquire()) {
                                 // On track C1
                                 tsi.setSwitch(15, 9, TSimInterface.SWITCH_RIGHT);
                             } else {
                                 // On track C2
+                                c2.acquire();
                                 tsi.setSwitch(15, 9, TSimInterface.SWITCH_LEFT);
                             }
                             // Resume the speed
@@ -149,22 +144,14 @@ public class Lab1 {
                         /**
                          * C --> D
                          */
-                        // From C1 to D
+                        // From C1 to D, and release the semaphore c1
                         if (checkSensor(6, 9, se, direction)) {
-                            getPermission(id, speed, 4, 9, TSimInterface.SWITCH_LEFT, d);
+                            acquireAndRelease(id, speed, 4, 9, TSimInterface.SWITCH_LEFT, d, c1);
                         }
 
-                        // From C2 to D
+                        // From C2 to D, and release the semaphore c2
                         if (checkSensor(6, 10, se, direction)) {
-                            getPermission(id, speed, 4, 9, TSimInterface.SWITCH_RIGHT, d);
-                        }
-
-                        // Has arrived D, need to release the semaphore c
-                        if (checkSensor(2, 9, se, direction)) {
-                            // If the train comes from a parallel track and holds a semaphore, it must release the semaphore resource.
-                            if (isSemaphoreHeld(c)) {
-                                c.release();
-                            }
+                            acquireAndRelease(id, speed, 4, 9, TSimInterface.SWITCH_RIGHT, d, c2);
                         }
 
                         /**
@@ -176,11 +163,12 @@ public class Lab1 {
                             tsi.setSpeed(id, 0);
                             // Make a decision at the switch
                             // If the main road is not occupied, it should be used as the primary route.
-                            if (e.tryAcquire()) {
+                            if (e1.tryAcquire()) {
                                 // On track E1
                                 tsi.setSwitch(3, 11, TSimInterface.SWITCH_LEFT);
                             } else {
                                 // On track E2
+                                e2.acquire();
                                 tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
                             }
                             // Resume the speed
@@ -205,22 +193,14 @@ public class Lab1 {
                         /**
                          * E --> D
                          */
-                        // From E1 to D
+                        // From E1 to D, and release the semaphore e1
                         if (checkSensor(5, 11, se, !direction)) {
-                            getPermission(id, speed, 3, 11, TSimInterface.SWITCH_LEFT, d);
+                            acquireAndRelease(id, speed, 3, 11, TSimInterface.SWITCH_LEFT, d, e1);
                         }
 
-                        // From E2 to D
+                        // From E2 to D, and release the semaphore e2
                         if (checkSensor(4, 13, se, !direction)) {
-                            getPermission(id, speed, 3, 11, TSimInterface.SWITCH_RIGHT, d);
-                        }
-
-                        // Has arrived D, need to release the semaphore e
-                        if (checkSensor(1, 11, se, !direction)) {
-                            // If the train comes from a parallel track and holds a semaphore, it must release the semaphore resource.
-                            if (isSemaphoreHeld(e)) {
-                                e.release();
-                            }
+                            acquireAndRelease(id, speed, 3, 11, TSimInterface.SWITCH_RIGHT, d, e2);
                         }
 
                         /**
@@ -232,11 +212,12 @@ public class Lab1 {
                             tsi.setSpeed(id, 0);
                             // Make a decision at the switch
                             // If the main road is not occupied, it should be used as the primary route.
-                            if (c.tryAcquire()) {
+                            if (c1.tryAcquire()) {
                                 // On track C1
                                 tsi.setSwitch(4, 9, TSimInterface.SWITCH_LEFT);
                             } else {
                                 // On track C2
+                                c2.acquire();
                                 tsi.setSwitch(4, 9, TSimInterface.SWITCH_RIGHT);
                             }
                             // Resume the speed
@@ -256,22 +237,14 @@ public class Lab1 {
                         /**
                          * C --> B
                          */
-                        // From C1 to B
+                        // From C1 to B, and release the semaphore c1
                         if (checkSensor(13, 9, se, !direction)) {
-                            getPermission(id, speed, 15, 9, TSimInterface.SWITCH_RIGHT, b);
+                            acquireAndRelease(id, speed, 15, 9, TSimInterface.SWITCH_RIGHT, b, c1);
                         }
 
-                        // From C2 to B
+                        // From C2 to B, and release the semaphore c2
                         if (checkSensor(13, 10, se, !direction)) {
-                            getPermission(id, speed, 15, 9, TSimInterface.SWITCH_LEFT, b);
-                        }
-
-                        // Has arrived B, need to release the semaphore c
-                        if (checkSensor(17, 9, se, !direction)) {
-                            // If the train comes from a parallel track and holds a semaphore, it must release the semaphore resource.
-                            if (isSemaphoreHeld(c)) {
-                                c.release();
-                            }
+                            acquireAndRelease(id, speed, 15, 9, TSimInterface.SWITCH_LEFT, b, c2);
                         }
 
                         /**
@@ -283,10 +256,10 @@ public class Lab1 {
                             tsi.setSpeed(id, 0);
                             // Make a decision at the switch
                             // If the main road is not occupied, it should be used as the primary route.
-                            if (a.tryAcquire()) {
+                            if (a1.tryAcquire()) {
                                 // On track A1
                                 tsi.setSwitch(17, 7, TSimInterface.SWITCH_RIGHT);
-                            } else {
+                            } else if (a2.tryAcquire()) {
                                 // On track A2
                                 tsi.setSwitch(17, 7, TSimInterface.SWITCH_LEFT);
                             }
