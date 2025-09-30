@@ -19,7 +19,7 @@ public class Lab1 {
 
             // Pre-configure switch position to match semaphore initialization
             // Switch at (3,11) points RIGHT towards E2 track, consistent with e2=1, e1=0
-            tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
+//            tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
         } catch (CommandException e) {
             e.printStackTrace();
             System.exit(1);
@@ -101,7 +101,7 @@ public class Lab1 {
                          * A --> B
                          */
                         // From A1 to B, and release the semaphore a1
-                        if (checkSensor(15, 7, se, direction)) {
+                        if (checkSensor(14, 7, se, direction)) {
                             acquireAndRelease(id, speed, 17, 7, TSimInterface.SWITCH_RIGHT, b, a1);
                         }
 
@@ -132,7 +132,7 @@ public class Lab1 {
                         }
 
                         // Has arrived C1, need to release the semaphore b
-                        if (checkSensor(13, 9, se, direction)) {
+                        if (checkSensor(12, 9, se, direction)) {
                             b.release();
                         }
 
@@ -145,7 +145,7 @@ public class Lab1 {
                          * C --> D
                          */
                         // From C1 to D, and release the semaphore c1
-                        if (checkSensor(6, 9, se, direction)) {
+                        if (checkSensor(7, 9, se, direction)) {
                             acquireAndRelease(id, speed, 4, 9, TSimInterface.SWITCH_LEFT, d, c1);
                         }
 
@@ -176,7 +176,7 @@ public class Lab1 {
                         }
 
                         // Has arrived E1, need to release the semaphore d
-                        if (checkSensor(5, 11, se, direction)) {
+                        if (checkSensor(6, 11, se, direction)) {
                             d.release();
                         }
 
@@ -194,7 +194,7 @@ public class Lab1 {
                          * E --> D
                          */
                         // From E1 to D, and release the semaphore e1
-                        if (checkSensor(5, 11, se, !direction)) {
+                        if (checkSensor(6, 11, se, !direction)) {
                             acquireAndRelease(id, speed, 3, 11, TSimInterface.SWITCH_LEFT, d, e1);
                         }
 
@@ -225,7 +225,7 @@ public class Lab1 {
                         }
 
                         // Has arrived C1, need to release the semaphore d
-                        if (checkSensor(6, 9, se, !direction)) {
+                        if (checkSensor(7, 9, se, !direction)) {
                             d.release();
                         }
 
@@ -238,7 +238,7 @@ public class Lab1 {
                          * C --> B
                          */
                         // From C1 to B, and release the semaphore c1
-                        if (checkSensor(13, 9, se, !direction)) {
+                        if (checkSensor(12, 9, se, !direction)) {
                             acquireAndRelease(id, speed, 15, 9, TSimInterface.SWITCH_RIGHT, b, c1);
                         }
 
@@ -268,7 +268,7 @@ public class Lab1 {
                         }
 
                         // Has arrived A1, need to release the semaphore b
-                        if (checkSensor(15, 7, se, !direction)) {
+                        if (checkSensor(14, 7, se, !direction)) {
                             b.release();
                         }
 
@@ -282,7 +282,7 @@ public class Lab1 {
                          */
 
                         // Between A1 and F, from north to south
-                        if (checkSensor(6, 7, se)) {
+                        if (checkSensor(6, 6, se)) {
                             if (direction) {
                                 // If the direction is true, meaning from A1 to F
                                 // Stop the train first
@@ -299,7 +299,7 @@ public class Lab1 {
                         }
 
                         // Between A1 and F, from south to north
-                        if (checkSensor(10, 7, se)) {
+                        if (checkSensor(11, 7, se)) {
                             if (!direction) {
                                 // If the direction is false, meaning from A1 to F
                                 // Stop the train first
@@ -316,7 +316,7 @@ public class Lab1 {
                         }
 
                         // Between A2 and F, from north to south
-                        if (checkSensor(8, 5, se)) {
+                        if (checkSensor(9, 5, se)) {
                             if (direction) {
                                 // If the direction is true, meaning from A2 to F
                                 // Stop the train first
@@ -333,7 +333,7 @@ public class Lab1 {
                         }
 
                         // Between A2 and F, from south to north
-                        if (checkSensor(9, 8, se)) {
+                        if (checkSensor(10, 8, se)) {
                             if (!direction) {
                                 // If the direction is false, meaning from A2 to F
                                 // Stop the train first
