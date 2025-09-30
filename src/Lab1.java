@@ -16,10 +16,6 @@ public class Lab1 {
             // Set initial speeds for both trains
             tsi.setSpeed(1, speed1);
             tsi.setSpeed(2, speed2);
-
-            // Pre-configure switch position to match semaphore initialization
-            // Switch at (3,11) points RIGHT towards E2 track, consistent with e2=1, e1=0
-//            tsi.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
         } catch (CommandException e) {
             e.printStackTrace();
             System.exit(1);
